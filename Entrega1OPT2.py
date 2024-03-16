@@ -202,10 +202,11 @@ print("Error de la recta:", error)
 
 #REPRESENTACION RESULTADO ANTERIOR
 
+
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
-from pulp import LpProblem, LpVariable, lpSum, LpMinimize
+import matplotlib.pyplot as plt
+from pulp import LpProblem, LpVariable, lpSum, LpMinimize, LpStatus
 
 # Cargar los datos desde el archivo CSV
 data = pd.read_csv("BostonHousing.csv")
@@ -235,28 +236,40 @@ for i in range(n):
 # Resolver el problema
 prob.solve()
 
+# Verificar si la solución es óptima
+if LpStatus[prob.status] != 'Optimal':
+    print("No se pudo encontrar una solución óptima.")
+    exit()
+
 # Extraer los coeficientes y el intercepto
 coeficientes = [v.varValue for v in variables]
 intercepto_valor = intercepto.varValue
 
-# Calcular la variable predicha por la recta de regresión
-data['medv_pred'] = intercepto_valor + np.dot(data.iloc[:, 1:m].values, coeficientes)
+# Calcular las predicciones de la recta de regresión
+x_vals = data['lstat']
+y_vals = intercepto_valor + np.dot(data.iloc[:, 1:].values, coeficientes)
 
 # Crear la figura y los ejes
 plt.figure(figsize=(10, 6))
-plt.scatter(data['medv'], data['medv_pred'], color='blue', alpha=0.6)
+
+# Visualizar los datos (puntos)
+plt.scatter(data['lstat'], data['medv'], color='blue', label='Datos reales')
+
+# Visualizar la recta de regresión
+plt.plot(x_vals, y_vals, color='red', label='Recta de regresión')
 
 # Títulos y etiquetas de los ejes
-plt.title('Recta de Regresión L1 - Valor Mediano de Viviendas', fontsize=16)
-plt.xlabel('medv (Valor Real)', fontsize=14)
-plt.ylabel('medv_pred (Valor Predicho)', fontsize=14)
+plt.title('Recta de Regresión y Datos', fontsize=16)
+plt.xlabel('lstat', fontsize=14)
+plt.ylabel('medv', fontsize=14)
 
-# Línea de identidad
-plt.plot(data['medv'], data['medv'], color='red', linestyle='--')
+# Mostrar la leyenda y la cuadrícula
+plt.legend()
+plt.grid(True)
 
 # Mostrar la gráfica
-plt.grid(True)
 plt.show()
+
 
 # PLANTEAMIENTO 3
 
