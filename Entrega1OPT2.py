@@ -318,3 +318,68 @@ print(f"medv = {intercepto_valor} + {' + '.join([f'{coeficientes[i]} * {data.col
 error = desviacion_maxima.varValue
 print("Desviación absoluta máxima:", error)
 
+
+#REPRESENTACION
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from pulp import LpProblem, LpVariable, lpSum, LpMinimize
+
+# Cargar los datos desde el archivo CSV
+data = pd.read_csv("BostonHousing.csv")
+
+# Número de filas y columnas en los datos
+n, m = data.shape
+
+# Crear el problema de programación lineal
+prob = LpProblem("Recta_Regresion_L_inf", LpMinimize)
+
+# Definir las variables
+variables = [LpVariable("coef_" + str(i), lowBound=None) for i in range(1, m)]
+intercepto = LpVariable("intercepto", lowBound=None)
+desviacion_maxima = LpVariable("desviacion_maxima", lowBound=None)
+
+# Definir la función objetivo
+prob += desviacion_maxima
+
+# Restricciones
+for i in range(n):
+    prob += data['medv'][i] - lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) - intercepto <= desviacion_maxima
+    prob += lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) + intercepto - data['medv'][i] <= desviacion_maxima
+
+# Resolver el problema
+prob.solve()
+
+# Extraer los coeficientes y el intercepto
+coeficientes = [v.varValue for v in variables]
+intercepto_valor = intercepto.varValue
+
+# Crear la figura y los ejes
+plt.figure(figsize=(10, 6))
+
+# Visualizar los datos
+plt.scatter(data['lstat'], data['medv'], color='blue', label='Datos reales', alpha=0.6)
+
+# Calcular la variable predicha por la recta de regresión
+x_vals = np.linspace(data['lstat'].min(), data['lstat'].max(), 100)
+y_vals = intercepto_valor + coeficientes[0] * x_vals  # Suponiendo que solo hay una variable explicativa
+
+# Visualizar la recta de regresión
+plt.plot(x_vals, y_vals, color='red', label='Recta de regresión')
+
+# Títulos y etiquetas de los ejes
+plt.title('Recta de Regresión - Desviación Absoluta Máxima', fontsize=16)
+plt.xlabel('lstat (Variable Explicativa)', fontsize=14)
+plt.ylabel('medv (Variable Objetivo)', fontsize=14)
+
+# Mostrar leyenda y cuadrícula
+plt.legend()
+plt.grid(True)
+
+# Mostrar la gráfica
+plt.show()
+
+
+
