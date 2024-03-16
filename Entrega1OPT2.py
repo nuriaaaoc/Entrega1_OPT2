@@ -154,3 +154,108 @@ plt.show()
 
 #    b0, b1, ..., b12 >= 0
 #    b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9 + b10 + b11 + b12 = 1
+
+import pandas as pd
+from pulp import LpProblem, LpVariable, lpSum, LpMinimize
+
+# Cargar los datos desde el archivo CSV
+data = pd.read_csv("BostonHousing.csv")
+
+# Número de filas y columnas en los datos
+n, m = data.shape
+
+# Crear el problema de programación lineal
+prob = LpProblem("Recta_Regresion_L1", LpMinimize)
+
+# Definir las variables
+variables = [LpVariable("coef_" + str(i), lowBound=None) for i in range(1, m)]
+intercepto = LpVariable("intercepto", lowBound=None)
+
+# Nuevas variables para las desviaciones positivas y negativas
+positivas = [LpVariable(f"positivas_{i}", lowBound=0) for i in range(n)]
+negativas = [LpVariable(f"negativas_{i}", lowBound=0) for i in range(n)]
+
+# Definir la función objetivo
+prob += lpSum(positivas) + lpSum(negativas)
+
+# Restricciones de las desviaciones
+for i in range(n):
+    prob += data['medv'][i] - lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) - intercepto <= positivas[i]
+    prob += lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) + intercepto - data['medv'][i] <= negativas[i]
+
+# Resolver el problema
+prob.solve()
+
+# Extraer los coeficientes y el intercepto
+coeficientes = [v.varValue for v in variables]
+intercepto_valor = intercepto.varValue
+
+# Imprimir la ecuación de la recta resultante
+print("Ecuación de la recta:")
+print(f"medv = {intercepto_valor} + {' + '.join([f'{coeficientes[i]} * {data.columns[i+1]}' for i in range(len(coeficientes))])}")
+
+# Calcular el error de la recta
+error = sum(positivas[i].varValue + negativas[i].varValue for i in range(n))
+print("Error de la recta:", error)
+
+
+
+#REPRESENTACION RESULTADO ANTERIOR
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from pulp import LpProblem, LpVariable, lpSum, LpMinimize
+
+# Cargar los datos desde el archivo CSV
+data = pd.read_csv("BostonHousing.csv")
+
+# Número de filas y columnas en los datos
+n, m = data.shape
+
+# Crear el problema de programación lineal
+prob = LpProblem("Recta_Regresion_L1", LpMinimize)
+
+# Definir las variables
+variables = [LpVariable("coef_" + str(i), lowBound=None) for i in range(1, m)]
+intercepto = LpVariable("intercepto", lowBound=None)
+
+# Nuevas variables para las desviaciones positivas y negativas
+positivas = [LpVariable(f"positivas_{i}", lowBound=0) for i in range(n)]
+negativas = [LpVariable(f"negativas_{i}", lowBound=0) for i in range(n)]
+
+# Definir la función objetivo
+prob += lpSum(positivas) + lpSum(negativas)
+
+# Restricciones de las desviaciones
+for i in range(n):
+    prob += data['medv'][i] - lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) - intercepto <= positivas[i]
+    prob += lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) + intercepto - data['medv'][i] <= negativas[i]
+
+# Resolver el problema
+prob.solve()
+
+# Extraer los coeficientes y el intercepto
+coeficientes = [v.varValue for v in variables]
+intercepto_valor = intercepto.varValue
+
+# Calcular la variable predicha por la recta de regresión
+data['medv_pred'] = intercepto_valor + np.dot(data.iloc[:, 1:m].values, coeficientes)
+
+# Crear la figura y los ejes
+plt.figure(figsize=(10, 6))
+plt.scatter(data['medv'], data['medv_pred'], color='blue', alpha=0.6)
+
+# Títulos y etiquetas de los ejes
+plt.title('Recta de Regresión L1 - Valor Mediano de Viviendas', fontsize=16)
+plt.xlabel('medv (Valor Real)', fontsize=14)
+plt.ylabel('medv_pred (Valor Predicho)', fontsize=14)
+
+# Línea de identidad
+plt.plot(data['medv'], data['medv'], color='red', linestyle='--')
+
+# Mostrar la gráfica
+plt.grid(True)
+plt.show()
+
+
