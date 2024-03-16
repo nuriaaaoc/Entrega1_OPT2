@@ -277,3 +277,44 @@ plt.show()
 #        (m1xi1+m2xi2+...+mkxik+b)−yi≤d
 #        (m1​xi1​+m2​xi2​+...+mk​xik​+b)−yi​≤d
 
+
+import pandas as pd
+from pulp import LpProblem, LpVariable, lpSum, LpMinimize
+
+# Cargar los datos desde el archivo CSV
+data = pd.read_csv("BostonHousing.csv")
+
+# Número de filas y columnas en los datos
+n, m = data.shape
+
+# Crear el problema de programación lineal
+prob = LpProblem("Recta_Regresion_L_inf", LpMinimize)
+
+# Definir las variables
+variables = [LpVariable("coef_" + str(i), lowBound=None) for i in range(1, m)]
+intercepto = LpVariable("intercepto", lowBound=None)
+desviacion_maxima = LpVariable("desviacion_maxima", lowBound=None)
+
+# Definir la función objetivo
+prob += desviacion_maxima
+
+# Restricciones
+for i in range(n):
+    prob += data['medv'][i] - lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) - intercepto <= desviacion_maxima
+    prob += lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) + intercepto - data['medv'][i] <= desviacion_maxima
+
+# Resolver el problema
+prob.solve()
+
+# Extraer los coeficientes y el intercepto
+coeficientes = [v.varValue for v in variables]
+intercepto_valor = intercepto.varValue
+
+# Imprimir la ecuación de la recta resultante
+print("Ecuación de la recta:")
+print(f"medv = {intercepto_valor} + {' + '.join([f'{coeficientes[i]} * {data.columns[i+1]}' for i in range(len(coeficientes))])}")
+
+# Calcular el error de la recta
+error = desviacion_maxima.varValue
+print("Desviación absoluta máxima:", error)
+
