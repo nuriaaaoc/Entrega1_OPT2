@@ -395,4 +395,83 @@ plt.grid(True)
 plt.show()
 
 
+#4 MEDIANTE NORMA2
+
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+# Cargar los datos desde el archivo CSV
+data = pd.read_csv("BostonHousing.csv")
+
+# Separar las variables explicativas (X) y la variable objetivo (y)
+X = data.drop(columns=['medv'])
+y = data['medv']
+
+# Inicializar el modelo de regresión lineal
+model = LinearRegression()
+
+# Ajustar el modelo a los datos
+model.fit(X, y)
+
+# Obtener los coeficientes de la recta de regresión
+coeficientes = model.coef_
+intercepto = model.intercept_
+
+# Imprimir la ecuación de la recta resultante
+print("Ecuación de la recta:")
+print("medv =", intercepto, "+", " + ".join([f"{coeficientes[i]} * {X.columns[i]}" for i in range(len(coeficientes))]))
+
+# Calcular el error de la recta (error cuadrático medio)
+y_pred = model.predict(X)
+error = mean_squared_error(y, y_pred)
+print("Error cuadrático medio de la recta:", error)
+
+
+#REPRESENTACION RESULTADOS
+
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+
+# Cargar los datos desde el archivo CSV
+data = pd.read_csv("BostonHousing.csv")
+
+# Separar las variables explicativas (X) y la variable objetivo (y)
+X = data.drop(columns=['medv'])
+y = data['medv']
+
+# Inicializar el modelo de regresión lineal
+model = LinearRegression()
+
+# Ajustar el modelo a los datos
+model.fit(X, y)
+
+# Obtener las predicciones del modelo
+y_pred = model.predict(X)
+
+# Crear la figura y los ejes
+plt.figure(figsize=(10, 6))
+
+# Visualizar los datos (puntos)
+plt.scatter(y, y_pred, color='blue', label='Datos reales vs. Predicciones')
+
+# Visualizar la recta de regresión
+plt.plot([y.min(), y.max()], [y.min(), y.max()], color='red', linestyle='--', label='Recta de regresión')
+
+# Títulos y etiquetas de los ejes
+plt.title('Recta de Regresión y Predicciones vs. Datos Reales', fontsize=16)
+plt.xlabel('Valor real de medv', fontsize=14)
+plt.ylabel('Predicción de medv', fontsize=14)
+
+# Mostrar la leyenda y la cuadrícula
+plt.legend()
+plt.grid(True)
+
+# Mostrar la gráfica
+plt.show()
+
+
+
+
 
