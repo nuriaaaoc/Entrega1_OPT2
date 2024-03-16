@@ -258,4 +258,22 @@ plt.plot(data['medv'], data['medv'], color='red', linestyle='--')
 plt.grid(True)
 plt.show()
 
+# PLANTEAMIENTO 3
+
+#Dado un conjunto de datos (xi,yi)(xi​,yi​), donde xixi​ representa las variables explicativas y yiyi​ representa la variable objetivo (medv), buscamos encontrar los coeficientes m1,m2,...,mkm1​,m2​,...,mk​ y el término de intercepción bb de la recta y=m1x1+m2x2+...+mkxk+by=m1​x1​+m2​x2​+...+mk​xk​+b que minimiza la desviación absoluta máxima entre las predicciones y los valores reales.
+#Podemos definir el problema de programación lineal de la siguiente manera:
+#   Variables de Decisión:
+#      m1,m2,...,mkm1​,m2​,...,mk​: Los coeficientes de las variables explicativas.
+#        bb: Término de intercepción.
+#        dd: Desviación absoluta máxima.
+
+#    Función Objetivo:
+#    Minimizar dd.
+
+#    Restricciones:
+#        Para cada observación (xi,yi)(xi​,yi​):
+#        yi−(m1xi1+m2xi2+...+mkxik+b)≤d
+#        yi​−(m1​xi1​+m2​xi2​+...+mk​xik​+b)≤d
+#        (m1xi1+m2xi2+...+mkxik+b)−yi≤d
+#        (m1​xi1​+m2​xi2​+...+mk​xik​+b)−yi​≤d
 
