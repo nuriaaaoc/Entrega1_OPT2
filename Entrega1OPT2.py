@@ -369,43 +369,83 @@ plt.show()
 #COMPARACION DE PREDICCIONES: NORMA 1 VS NORMA INFINITO VS NORMA 2
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+from pulp import LpProblem, LpMinimize, LpVariable, lpSum
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
 
-# Simular valores reales de 'medv' y predicciones de cada método para 100 observaciones
-np.random.seed(42)  # Para reproducibilidad
-n_observaciones = 100
-valores_reales = np.random.uniform(10, 50, n_observaciones)  # Simular valores reales de 'medv'
+# Method 1: L1
+def l1_regression(X, y):
+    prob = LpProblem("Minimize_L1_Norm", LpMinimize)
+    beta = LpVariable.dicts("Beta", range(X.shape[1] + 1), lowBound=None)
+    d_plus = LpVariable.dicts("d_plus", range(y.shape[0]), lowBound=0)
+    d_minus = LpVariable.dicts("d_minus", range(y.shape[0]), lowBound=0)
 
-# Simular predicciones de los tres métodos
-predicciones_l1 = valores_reales + np.random.normal(0, 5, n_observaciones)  # Norma L1
-predicciones_linf = valores_reales + np.random.normal(0, 5, n_observaciones)  # Norma infinito
-predicciones_l2 = valores_reales + np.random.normal(0, 5, n_observaciones)  # Norma L2
+    prob += lpSum(d_plus[i] + d_minus[i] for i in range(y.shape[0]))
 
-# Crear DataFrame para la visualización
-df_predicciones = pd.DataFrame({
-    'Valores Reales': valores_reales,
-    'Predicciones L1': predicciones_l1,
-    'Predicciones Linf': predicciones_linf,
-    'Predicciones L2': predicciones_l2
-})
+    for i in range(y.shape[0]):
+        xi = [1] + list(X.iloc[i, :])
+        prob += lpSum(beta[j] * xi[j] for j in range(X.shape[1] + 1)) + d_minus[i] - d_plus[i] == y.iloc[i]
 
-# Crear la visualización
-plt.figure(figsize=(14, 8))
+    prob.solve()
 
-# Scatter plot para cada método
-plt.scatter(valores_reales, predicciones_l1, color='blue', alpha=0.5, label='Norma L1')
-plt.scatter(valores_reales, predicciones_linf, color='green', alpha=0.5, label='Norma Infinito')
-plt.scatter(valores_reales, predicciones_l2, color='red', alpha=0.5, label='Norma L2')
+    coeficientes1 = [beta[j].varValue for j in range(X.shape[1] + 1)]
+    predicciones = [sum(coeficientes1[j] * xi if j > 0 else coeficientes1[j] for j, xi in enumerate([1] + list(X.iloc[i, :]))) for i in range(y.shape[0])]
 
-# Linea de identidad para referencia
-plt.plot(valores_reales, valores_reales, 'k--', label='Identidad')
+    return predicciones
 
-# Títulos y leyendas
-plt.title('Comparación de Predicciones: Norma L1 vs. Norma Infinito vs. Norma L2', fontsize=16)
-plt.xlabel('Valores Reales de MEDV', fontsize=14)
-plt.ylabel('Predicciones de MEDV', fontsize=14)
+# Method 2: Linfinito
+def linfinito_regression(X, y):
+    prob = LpProblem("Minimizar_Norma_Infinito", LpMinimize)
+    coeficientes = LpVariable.dicts("Coef", range(X.shape[1] + 1), cat='Continuous')
+    max_dev = LpVariable("MaxDev", lowBound=0)
+
+    prob += max_dev
+
+    for i in range(y.shape[0]):
+        xi = pd.Series([1]).append(X.iloc[i])
+        prediction = lpSum([coeficientes[j] * xi.values[j] for j in range(X.shape[1] + 1)])
+        prob += prediction - y.iloc[i] <= max_dev
+        prob += y.iloc[i] - prediction <= max_dev
+
+    prob.solve()
+
+    coef_resultados = [coeficientes[j].varValue for j in range(X.shape[1] + 1)]
+    X_with_intercept = pd.concat([pd.Series(1, index=X.index, name="Intercept"), X], axis=1)
+    predictions = X_with_intercept.dot(coef_resultados)
+
+    return predictions
+
+# Method 3: LinearRegression
+def linear_regression(X, y):
+    model = LinearRegression()
+    model.fit(X, y)
+
+    coeficientes = model.coef_
+    intercepto = model.intercept_
+
+    y_pred = model.predict(X)
+
+    return y_pred
+
+# Load data
+data = pd.read_csv("BostonHousing.csv")
+X = data.drop(columns=['medv'])
+y = data['medv']
+
+# Perform regression using the three methods
+predicciones_l1 = l1_regression(X, y)
+predicciones_linf = linfinito_regression(X, y)
+predicciones_l2 = linear_regression(X, y)
+
+# Plot the results
+plt.figure(figsize=(10, 6))
+plt.scatter(y,predicciones_l1, color='blue', label='L1')
+plt.scatter(y, predicciones_linf, color='green', label='L-infinito')
+plt.scatter(y, predicciones_l2, color='red', label='LinearRegression')
+plt.plot([y.min(), y.max()], [y.min(), y.max()], color='black', linestyle='--', label='True Line')
+plt.xlabel('Target')
+plt.ylabel('Predictions')
+plt.title('Comparison of L1, L-infinito, and LinearRegression')
 plt.legend()
-plt.grid(True)
-
 plt.show()
