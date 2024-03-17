@@ -144,6 +144,8 @@ plt.show()
 
 
 # PLANTEAMIENTO 2 
+#MEDIANTE PROGRAMACION LINEAL MINIMIZANDO LA SUMA DE LAS DESVIACIONES ABSOLUTAS (l1)
+
 #Queremos minimizar la suma de las desviaciones absolutas (norma ℓ 1) entre el valor real de las viviendas (medv) y el valor predicho por la recta de regresión lineal. La recta de regresión lineal se puede expresar como:
 
 #medv_pred = b0 + b1 * crim + b2 * zn + b3 * indus + b4 * chas + b5 * nox + b6 * rm + b7 * age + b8 * dis + b9 * rad + b10 * tax + b11 * pt_ratio + b12 * lstat
@@ -155,120 +157,70 @@ plt.show()
 #    b0, b1, ..., b12 >= 0
 #    b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9 + b10 + b11 + b12 = 1
 
-import pandas as pd
-from pulp import LpProblem, LpVariable, lpSum, LpMinimize
-
-# Cargar los datos desde el archivo CSV
-data = pd.read_csv("BostonHousing.csv")
-
-# Número de filas y columnas en los datos
-n, m = data.shape
-
-# Crear el problema de programación lineal
-prob = LpProblem("Recta_Regresion_L1", LpMinimize)
-
-# Definir las variables
-variables = [LpVariable("coef_" + str(i), lowBound=None) for i in range(1, m)]
-intercepto = LpVariable("intercepto", lowBound=None)
-
-# Nuevas variables para las desviaciones positivas y negativas
-positivas = [LpVariable(f"positivas_{i}", lowBound=0) for i in range(n)]
-negativas = [LpVariable(f"negativas_{i}", lowBound=0) for i in range(n)]
-
-# Definir la función objetivo
-prob += lpSum(positivas) + lpSum(negativas)
-
-# Restricciones de las desviaciones
-for i in range(n):
-    prob += data['medv'][i] - lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) - intercepto <= positivas[i]
-    prob += lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) + intercepto - data['medv'][i] <= negativas[i]
-
-# Resolver el problema
-prob.solve()
-
-# Extraer los coeficientes y el intercepto
-coeficientes = [v.varValue for v in variables]
-intercepto_valor = intercepto.varValue
-
-# Imprimir la ecuación de la recta resultante
-print("Ecuación de la recta:")
-print(f"medv = {intercepto_valor} + {' + '.join([f'{coeficientes[i]} * {data.columns[i+1]}' for i in range(len(coeficientes))])}")
-
-# Calcular el error de la recta
-error = sum(positivas[i].varValue + negativas[i].varValue for i in range(n))
-print("Error de la recta:", error)
-
-
-
-#REPRESENTACION RESULTADO ANTERIOR
-
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-from pulp import LpProblem, LpVariable, lpSum, LpMinimize, LpStatus
+from pulp import LpProblem, LpMinimize, LpVariable, lpSum
 
-# Cargar los datos desde el archivo CSV
-data = pd.read_csv("BostonHousing.csv")
+data_path = '/home/alumnos/noviedo/OPT2/Entrega1/BostonHousing.csv'
+datos = pd.read_csv(data_path)
 
-# Número de filas y columnas en los datos
-n, m = data.shape
+# Asumir que 'datos' ya está definido y contiene la variable dependiente 'medv'
+# Si no, se debe cargar antes de este punto
 
-# Crear el problema de programación lineal
-prob = LpProblem("Recta_Regresion_L1", LpMinimize)
+# Separar variables explicativas y dependiente
+X = datos.drop(columns=['medv'])  # Variables explicativas
+y = datos['medv']                 # Variable dependiente
 
-# Definir las variables
-variables = [LpVariable("coef_" + str(i), lowBound=None) for i in range(1, m)]
-intercepto = LpVariable("intercepto", lowBound=None)
+# Dimensiones del conjunto de datos
+n, k = X.shape
 
-# Nuevas variables para las desviaciones positivas y negativas
-positivas = [LpVariable(f"positivas_{i}", lowBound=0) for i in range(n)]
-negativas = [LpVariable(f"negativas_{i}", lowBound=0) for i in range(n)]
+# Creación del problema de optimización
+prob = LpProblem("Minimize_L1_Norm", LpMinimize)
 
-# Definir la función objetivo
-prob += lpSum(positivas) + lpSum(negativas)
+# Definir variables para coeficientes (incluyendo el término independiente)
+beta = LpVariable.dicts("Beta", range(k + 1), lowBound=None)
 
-# Restricciones de las desviaciones
+# Variables de holgura para cada observación
+d_plus = LpVariable.dicts("d_plus", range(n), lowBound=0)
+d_minus = LpVariable.dicts("d_minus", range(n), lowBound=0)
+
+# Función objetivo: minimizar la suma de las desviaciones absolutas
+prob += lpSum(d_plus[i] + d_minus[i] for i in range(n))
+
+# Restricciones
 for i in range(n):
-    prob += data['medv'][i] - lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) - intercepto <= positivas[i]
-    prob += lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) + intercepto - data['medv'][i] <= negativas[i]
+    xi = [1] + list(X.iloc[i, :])  # Añadir un 1 al inicio para el intercepto
+    prob += lpSum(beta[j] * xi[j] for j in range(k + 1)) + d_minus[i] - d_plus[i] == y.iloc[i]
 
-# Resolver el problema
+# Resolver
 prob.solve()
 
-# Verificar si la solución es óptima
-if LpStatus[prob.status] != 'Optimal':
-    print("No se pudo encontrar una solución óptima.")
-    exit()
+# Coeficientes resultantes
+coeficientes1 = [beta[j].varValue for j in range(k + 1)]
 
-# Extraer los coeficientes y el intercepto
-coeficientes = [v.varValue for v in variables]
-intercepto_valor = intercepto.varValue
+# Predicciones y error total
+predicciones = [sum(coeficientes1[j] * xi if j > 0 else coeficientes1[j] for j, xi in enumerate([1] + list(X.iloc[i, :]))) for i in range(n)]
+error_absoluto_total = sum(abs(y.iloc[i] - pred) for i, pred in enumerate(predicciones))
+print("Error norma 1:", error_absoluto_total)
 
-# Calcular las predicciones de la recta de regresión
-x_vals = data['lstat']
-y_vals = intercepto_valor + np.dot(data.iloc[:, 1:].values, coeficientes)
+# Ecuación de la recta
+ecuacion_recta = "y = " + " + ".join("{:.2f}{}".format(coef, ' * ' + X.columns[j-1] if j > 0 else '') for j, coef in enumerate(coeficientes1))
+print("Ecuación de la recta:", ecuacion_recta)
 
-# Crear la figura y los ejes
+# Dibujo
 plt.figure(figsize=(10, 6))
-
-# Visualizar los datos (puntos)
-plt.scatter(data['lstat'], data['medv'], color='blue', label='Datos reales')
-
-# Visualizar la recta de regresión
-plt.plot(x_vals, y_vals, color='red', label='Recta de regresión')
-
-# Títulos y etiquetas de los ejes
-plt.title('Recta de Regresión y Datos', fontsize=16)
-plt.xlabel('lstat', fontsize=14)
-plt.ylabel('medv', fontsize=14)
-
-# Mostrar la leyenda y la cuadrícula
+plt.scatter(y, predicciones, color='blue', label='Predicciones vs. Reales')
+plt.plot(y, y, color='red', linestyle='--', label='Línea de referencia')
+plt.xlabel('Valores Reales')
+plt.ylabel('Predicciones')
+plt.title('Predicciones vs. Valores Reales')
 plt.legend()
 plt.grid(True)
-
-# Mostrar la gráfica
 plt.show()
+
+
+
 
 
 # PLANTEAMIENTO 3
