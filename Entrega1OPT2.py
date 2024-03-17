@@ -142,6 +142,11 @@ plt.ylabel('Frecuencia')
 plt.grid(axis='y', alpha=0.75)
 plt.show()
 
+# Calcular la matriz de correlación entre las variables
+correlation_matrix = data.corr()
+
+correlation_matrix
+
 
 # PLANTEAMIENTO 2 
 #MEDIANTE PROGRAMACION LINEAL MINIMIZANDO LA SUMA DE LAS DESVIACIONES ABSOLUTAS (norma l1)
