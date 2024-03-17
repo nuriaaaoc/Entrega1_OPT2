@@ -155,8 +155,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum
 
-data_path = '/home/alumnos/noviedo/OPT2/Entrega1/BostonHousing.csv'
-datos = pd.read_csv(data_path)
+datos = pd.read_csv('BostonHousing.csv')
 
 # Separar variables explicativas y dependiente
 X = datos.drop(columns=['medv'])  # Variables explicativas
@@ -221,7 +220,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 
 # Cargar los datos desde el archivo CSV
-datos = pd.read_csv('/home/alumnos/noviedo/OPT2/Entrega1/BostonHousing.csv')
+datos = pd.read_csv('BostonHousing.csv')
 
 # Separar las variables explicativas (X) y la variable dependiente (y)
 X = datos.drop(columns=['medv'])
@@ -277,6 +276,10 @@ plt.xlabel("Valores reales de medv")
 plt.ylabel("Valores predichos de medv")
 plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
 plt.show()
+
+
+
+
 
 
 # 4 
