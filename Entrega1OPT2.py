@@ -302,7 +302,8 @@ plt.ylabel("Valores predichos de medv")
 plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
 plt.show()
 
-#4 MEDIANTE NORMA2
+#PREGUNTA 4 
+#MEDIANTE METODO MINIMOS CUADRADOS USANDO LA FUNCION LineearRegression() (norma l2)
 
 import pandas as pd
 from sklearn.linear_model import LinearRegression
