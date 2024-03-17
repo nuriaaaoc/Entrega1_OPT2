@@ -148,20 +148,8 @@ correlation_matrix = data.corr()
 correlation_matrix
 
 
-# PLANTEAMIENTO 2 
+# 2 
 #MEDIANTE PROGRAMACION LINEAL MINIMIZANDO LA SUMA DE LAS DESVIACIONES ABSOLUTAS (norma l1)
-
-#Queremos minimizar la suma de las desviaciones absolutas (norma ℓ 1) entre el valor real de las viviendas (medv) y el valor predicho por la recta de regresión lineal. La recta de regresión lineal se puede expresar como:
-
-#medv_pred = b0 + b1 * crim + b2 * zn + b3 * indus + b4 * chas + b5 * nox + b6 * rm + b7 * age + b8 * dis + b9 * rad + b10 * tax + b11 * pt_ratio + b12 * lstat
-
-#Donde b0, b1, ..., b12 son los coeficientes de la recta de regresión lineal. El problema de programación lineal se puede formular de la siguiente manera:
-
-#Minimizar: | medv - medv_pred | Sujeto a:
-
-#    b0, b1, ..., b12 >= 0
-#    b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9 + b10 + b11 + b12 = 1
-
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -169,9 +157,6 @@ from pulp import LpProblem, LpMinimize, LpVariable, lpSum
 
 data_path = '/home/alumnos/noviedo/OPT2/Entrega1/BostonHousing.csv'
 datos = pd.read_csv(data_path)
-
-# Asumir que 'datos' ya está definido y contiene la variable dependiente 'medv'
-# Si no, se debe cargar antes de este punto
 
 # Separar variables explicativas y dependiente
 X = datos.drop(columns=['medv'])  # Variables explicativas
@@ -228,27 +213,8 @@ plt.show()
 
 
 
-# PLANTEAMIENTO 3
-#MEDIANTE PROGRAMACION LINEAL MINIMIZANDO LA DESVIACION ABSOLUTA MAXIMA (norma linfinito)
-
-#Dado un conjunto de datos (xi,yi)(xi​,yi​), donde xixi​ representa las variables explicativas y yiyi​ representa la variable objetivo (medv), buscamos encontrar los coeficientes m1,m2,...,mkm1​,m2​,...,mk​ y el término de intercepción bb de la recta y=m1x1+m2x2+...+mkxk+by=m1​x1​+m2​x2​+...+mk​xk​+b que minimiza la desviación absoluta máxima entre las predicciones y los valores reales.
-#Podemos definir el problema de programación lineal de la siguiente manera:
-#   Variables de Decisión:
-#      m1,m2,...,mkm1​,m2​,...,mk​: Los coeficientes de las variables explicativas.
-#        bb: Término de intercepción.
-#        dd: Desviación absoluta máxima.
-
-#    Función Objetivo:
-#    Minimizar dd.
-
-#    Restricciones:
-#        Para cada observación (xi,yi)(xi​,yi​):
-#        yi−(m1xi1+m2xi2+...+mkxik+b)≤d
-#        yi​−(m1​xi1​+m2​xi2​+...+mk​xik​+b)≤d
-#        (m1xi1+m2xi2+...+mkxik+b)−yi≤d
-#        (m1​xi1​+m2​xi2​+...+mk​xik​+b)−yi​≤d
-
-
+# 3
+# MEDIANTE PROGRAMACION LINEAL MINIMIZANDO LA DESVIACION ABSOLUTA MAXIMA (norma linfinito)
 
 import pandas as pd
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum
@@ -307,7 +273,7 @@ plt.ylabel("Valores predichos de medv")
 plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
 plt.show()
 
-#PREGUNTA 4 
+# 4 
 #MEDIANTE METODO MINIMOS CUADRADOS USANDO LA FUNCION LineearRegression() (norma l2)
 
 import pandas as pd
@@ -383,8 +349,6 @@ plt.grid(True)
 
 # Mostrar la gráfica
 plt.show()
-
-
 
 
 
