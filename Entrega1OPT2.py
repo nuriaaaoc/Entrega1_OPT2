@@ -215,10 +215,10 @@ plt.show()
 
 # 3
 # MEDIANTE PROGRAMACION LINEAL MINIMIZANDO LA DESVIACION ABSOLUTA MAXIMA (norma linfinito)
-
 import pandas as pd
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum
 import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error
 
 # Cargar los datos desde el archivo CSV
 datos = pd.read_csv('/home/alumnos/noviedo/OPT2/Entrega1/BostonHousing.csv')
@@ -260,9 +260,14 @@ max_dev_resultado = max_dev.varValue
 X_with_intercept = pd.concat([pd.Series(1, index=X.index, name="Intercept"), X], axis=1)
 predictions = X_with_intercept.dot(coef_resultados)
 
-# Imprimir los resultados
+# Calcular el error cuadrático medio
+mse = mean_squared_error(y, predictions)
+
+# Imprimir los resultados, incluyendo la ecuación de la recta y el MSE
 print("Coeficientes de la regresión:", coef_resultados)
+print("Ecuación de la recta: y =", " + ".join([f"{coef:.2f}*x{i}" for i, coef in enumerate(coef_resultados[1:], start=1)]), "+", f"{coef_resultados[0]:.2f}")
 print("Máxima desviación absoluta:", max_dev_resultado)
+print("Error cuadrático medio (MSE):", mse)
 
 # Dibujar los valores reales vs. los predichos
 plt.figure(figsize=(10, 6))
@@ -272,6 +277,7 @@ plt.xlabel("Valores reales de medv")
 plt.ylabel("Valores predichos de medv")
 plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
 plt.show()
+
 
 # 4 
 #MEDIANTE METODO MINIMOS CUADRADOS USANDO LA FUNCION LineearRegression() (norma l2)
