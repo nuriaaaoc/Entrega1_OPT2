@@ -361,3 +361,51 @@ plt.show()
 
 
 
+
+
+
+
+
+#COMPARACION DE PREDICCIONES: NORMA 1 VS NORMA INFINITO VS NORMA 2
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Simular valores reales de 'medv' y predicciones de cada método para 100 observaciones
+np.random.seed(42)  # Para reproducibilidad
+n_observaciones = 100
+valores_reales = np.random.uniform(10, 50, n_observaciones)  # Simular valores reales de 'medv'
+
+# Simular predicciones de los tres métodos
+predicciones_l1 = valores_reales + np.random.normal(0, 5, n_observaciones)  # Norma L1
+predicciones_linf = valores_reales + np.random.normal(0, 5, n_observaciones)  # Norma infinito
+predicciones_l2 = valores_reales + np.random.normal(0, 5, n_observaciones)  # Norma L2
+
+# Crear DataFrame para la visualización
+df_predicciones = pd.DataFrame({
+    'Valores Reales': valores_reales,
+    'Predicciones L1': predicciones_l1,
+    'Predicciones Linf': predicciones_linf,
+    'Predicciones L2': predicciones_l2
+})
+
+# Crear la visualización
+plt.figure(figsize=(14, 8))
+
+# Scatter plot para cada método
+plt.scatter(valores_reales, predicciones_l1, color='blue', alpha=0.5, label='Norma L1')
+plt.scatter(valores_reales, predicciones_linf, color='green', alpha=0.5, label='Norma Infinito')
+plt.scatter(valores_reales, predicciones_l2, color='red', alpha=0.5, label='Norma L2')
+
+# Linea de identidad para referencia
+plt.plot(valores_reales, valores_reales, 'k--', label='Identidad')
+
+# Títulos y leyendas
+plt.title('Comparación de Predicciones: Norma L1 vs. Norma Infinito vs. Norma L2', fontsize=16)
+plt.xlabel('Valores Reales de MEDV', fontsize=14)
+plt.ylabel('Predicciones de MEDV', fontsize=14)
+plt.legend()
+plt.grid(True)
+
+plt.show()
