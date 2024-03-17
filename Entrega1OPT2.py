@@ -144,7 +144,7 @@ plt.show()
 
 
 # PLANTEAMIENTO 2 
-#MEDIANTE PROGRAMACION LINEAL MINIMIZANDO LA SUMA DE LAS DESVIACIONES ABSOLUTAS (l1)
+#MEDIANTE PROGRAMACION LINEAL MINIMIZANDO LA SUMA DE LAS DESVIACIONES ABSOLUTAS (norma l1)
 
 #Queremos minimizar la suma de las desviaciones absolutas (norma ℓ 1) entre el valor real de las viviendas (medv) y el valor predicho por la recta de regresión lineal. La recta de regresión lineal se puede expresar como:
 
@@ -224,6 +224,7 @@ plt.show()
 
 
 # PLANTEAMIENTO 3
+#MEDIANTE PROGRAMACION LINEAL MINIMIZANDO LA DESVIACION ABSOLUTA MAXIMA (norma linfinito)
 
 #Dado un conjunto de datos (xi,yi)(xi​,yi​), donde xixi​ representa las variables explicativas y yiyi​ representa la variable objetivo (medv), buscamos encontrar los coeficientes m1,m2,...,mkm1​,m2​,...,mk​ y el término de intercepción bb de la recta y=m1x1+m2x2+...+mkxk+by=m1​x1​+m2​x2​+...+mk​xk​+b que minimiza la desviación absoluta máxima entre las predicciones y los valores reales.
 #Podemos definir el problema de programación lineal de la siguiente manera:
@@ -243,109 +244,63 @@ plt.show()
 #        (m1​xi1​+m2​xi2​+...+mk​xik​+b)−yi​≤d
 
 
-import pandas as pd
-from pulp import LpProblem, LpVariable, lpSum, LpMinimize
-
-# Cargar los datos desde el archivo CSV
-data = pd.read_csv("BostonHousing.csv")
-
-# Número de filas y columnas en los datos
-n, m = data.shape
-
-# Crear el problema de programación lineal
-prob = LpProblem("Recta_Regresion_L_inf", LpMinimize)
-
-# Definir las variables
-variables = [LpVariable("coef_" + str(i), lowBound=None) for i in range(1, m)]
-intercepto = LpVariable("intercepto", lowBound=None)
-desviacion_maxima = LpVariable("desviacion_maxima", lowBound=None)
-
-# Definir la función objetivo
-prob += desviacion_maxima
-
-# Restricciones
-for i in range(n):
-    prob += data['medv'][i] - lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) - intercepto <= desviacion_maxima
-    prob += lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) + intercepto - data['medv'][i] <= desviacion_maxima
-
-# Resolver el problema
-prob.solve()
-
-# Extraer los coeficientes y el intercepto
-coeficientes = [v.varValue for v in variables]
-intercepto_valor = intercepto.varValue
-
-# Imprimir la ecuación de la recta resultante
-print("Ecuación de la recta:")
-print(f"medv = {intercepto_valor} + {' + '.join([f'{coeficientes[i]} * {data.columns[i+1]}' for i in range(len(coeficientes))])}")
-
-# Calcular el error de la recta
-error = desviacion_maxima.varValue
-print("Desviación absoluta máxima:", error)
-
-
-#REPRESENTACION
-
 
 import pandas as pd
+from pulp import LpProblem, LpMinimize, LpVariable, lpSum
 import matplotlib.pyplot as plt
-import numpy as np
-from pulp import LpProblem, LpVariable, lpSum, LpMinimize
 
 # Cargar los datos desde el archivo CSV
-data = pd.read_csv("BostonHousing.csv")
+datos = pd.read_csv('/home/alumnos/noviedo/OPT2/Entrega1/BostonHousing.csv')
 
-# Número de filas y columnas en los datos
-n, m = data.shape
+# Separar las variables explicativas (X) y la variable dependiente (y)
+X = datos.drop(columns=['medv'])
+y = datos['medv']
 
-# Crear el problema de programación lineal
-prob = LpProblem("Recta_Regresion_L_inf", LpMinimize)
+# Preparar el problema de optimización
+prob = LpProblem("Minimizar_Norma_Infinito", LpMinimize)
 
-# Definir las variables
-variables = [LpVariable("coef_" + str(i), lowBound=None) for i in range(1, m)]
-intercepto = LpVariable("intercepto", lowBound=None)
-desviacion_maxima = LpVariable("desviacion_maxima", lowBound=None)
+# Número de características + 1 para el intercepto
+n_vars = X.shape[1] + 1
 
-# Definir la función objetivo
-prob += desviacion_maxima
+# Crear variables de decisión para los coeficientes y el intercepto
+coeficientes = LpVariable.dicts("Coef", range(n_vars), cat='Continuous')
 
-# Restricciones
-for i in range(n):
-    prob += data['medv'][i] - lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) - intercepto <= desviacion_maxima
-    prob += lpSum(variables[j-1] * data.iloc[i, j] for j in range(1, m)) + intercepto - data['medv'][i] <= desviacion_maxima
+# Variable para la desviación máxima
+max_dev = LpVariable("MaxDev", lowBound=0)
+
+# Minimizar la máxima desviación
+prob += max_dev
+
+# Añadir las restricciones
+for i in range(len(X)):
+    xi = pd.Series([1]).append(X.iloc[i])
+    prediction = lpSum([coeficientes[j] * xi.values[j] for j in range(n_vars)])
+    prob += prediction - y.iloc[i] <= max_dev
+    prob += y.iloc[i] - prediction <= max_dev
 
 # Resolver el problema
 prob.solve()
 
-# Extraer los coeficientes y el intercepto
-coeficientes = [v.varValue for v in variables]
-intercepto_valor = intercepto.varValue
+# Extraer resultados
+coef_resultados = [coeficientes[j].varValue for j in range(n_vars)]
+max_dev_resultado = max_dev.varValue
 
-# Crear la figura y los ejes
+# Predicciones utilizando los coeficientes resultantes
+X_with_intercept = pd.concat([pd.Series(1, index=X.index, name="Intercept"), X], axis=1)
+predictions = X_with_intercept.dot(coef_resultados)
+
+# Imprimir los resultados
+print("Coeficientes de la regresión:", coef_resultados)
+print("Máxima desviación absoluta:", max_dev_resultado)
+
+# Dibujar los valores reales vs. los predichos
 plt.figure(figsize=(10, 6))
-
-# Visualizar los datos
-plt.scatter(data['lstat'], data['medv'], color='blue', label='Datos reales', alpha=0.6)
-
-# Calcular la variable predicha por la recta de regresión
-x_vals = np.linspace(data['lstat'].min(), data['lstat'].max(), 100)
-y_vals = intercepto_valor + coeficientes[0] * x_vals  # Suponiendo que solo hay una variable explicativa
-
-# Visualizar la recta de regresión
-plt.plot(x_vals, y_vals, color='red', label='Recta de regresión')
-
-# Títulos y etiquetas de los ejes
-plt.title('Recta de Regresión - Desviación Absoluta Máxima', fontsize=16)
-plt.xlabel('lstat (Variable Explicativa)', fontsize=14)
-plt.ylabel('medv (Variable Objetivo)', fontsize=14)
-
-# Mostrar leyenda y cuadrícula
-plt.legend()
-plt.grid(True)
-
-# Mostrar la gráfica
+plt.scatter(y, predictions, alpha=0.5)
+plt.title("Valores reales vs. Valores predichos")
+plt.xlabel("Valores reales de medv")
+plt.ylabel("Valores predichos de medv")
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
 plt.show()
-
 
 #4 MEDIANTE NORMA2
 
