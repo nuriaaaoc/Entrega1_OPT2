@@ -374,7 +374,7 @@ from pulp import LpProblem, LpMinimize, LpVariable, lpSum
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
-# Method 1: L1
+# Metodo 1: L1
 def l1_regression(X, y):
     prob = LpProblem("Minimize_L1_Norm", LpMinimize)
     beta = LpVariable.dicts("Beta", range(X.shape[1] + 1), lowBound=None)
@@ -394,7 +394,7 @@ def l1_regression(X, y):
 
     return predicciones
 
-# Method 2: Linfinito
+# Metodo 2: Linfinito
 def linfinito_regression(X, y):
     prob = LpProblem("Minimizar_Norma_Infinito", LpMinimize)
     coeficientes = LpVariable.dicts("Coef", range(X.shape[1] + 1), cat='Continuous')
@@ -416,7 +416,7 @@ def linfinito_regression(X, y):
 
     return predictions
 
-# Method 3: LinearRegression
+# Metodo 3: Regresion Lineal
 def linear_regression(X, y):
     model = LinearRegression()
     model.fit(X, y)
@@ -428,17 +428,17 @@ def linear_regression(X, y):
 
     return y_pred
 
-# Load data
+# Cargar datos
 data = pd.read_csv("BostonHousing.csv")
 X = data.drop(columns=['medv'])
 y = data['medv']
 
-# Perform regression using the three methods
+# Regresion con los tres metodos
 predicciones_l1 = l1_regression(X, y)
 predicciones_linf = linfinito_regression(X, y)
 predicciones_l2 = linear_regression(X, y)
 
-# Plot the results
+# Representacion
 plt.figure(figsize=(10, 6))
 plt.scatter(y,predicciones_l1, color='blue', label='L1')
 plt.scatter(y, predicciones_linf, color='green', label='L-infinito')
